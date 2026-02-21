@@ -1,1 +1,1 @@
-just to test the redirect check script, to fill in free time
+This is just my own project, nothing to do with the PCAP owner, just to fill my time
