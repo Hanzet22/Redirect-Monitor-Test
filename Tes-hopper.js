@@ -1,12 +1,30 @@
-/**
+// ==UserScript==
+// @name         Tes-hopper
+// @namespace    https://publicdns.xyz/
+// @version      2.1
+// @description  DNS Proxy Cascade — publicdns.xyz IP pool | Priority: JP > TW > SG > ID | Weight: JP 50% | TW 30% | SG 15% | ID 5% | Session-locked per hostname | 3-hop chain
+// @author       Farhan (海鹏 鸟神 / Hanzet22)
+// @match        *://*/*
+// @run-at       document-start
+// @grant        none
+// ==/UserScript==
+
+/*
  * Proxy Hopper v2.1
- * By: Farhan (海鹏 鸟神 / Hanzet22)
- * Purpose: DNS Proxy Cascade — publicdns.xyz IP pool
- *          Priority: JP > TW > SG > ID
- *          Weight  : JP 50% | TW 30% | SG 15% | ID 5%
- *          Session-locked per hostname | 3-hop chain
- * Total IPs: 436 (JP:195 TW:148 SG:50 ID:43)
- * Version Test
+ * DNS Proxy Cascade Engine
+ *
+ * Priority Order : JP > TW > SG > ID
+ * Weight Model   : JP 50% | TW 30% | SG 15% | ID 5%
+ * Session Lock   : Per Hostname
+ * Chain Model    : 3-Hop Cascade
+ *
+ * Total IP Pool  : 436
+ * JP: 195
+ * TW: 148
+ * SG: 50
+ * ID: 43
+ *
+ * Status: Version Test
  */
 
 (function () {
