@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         heap-guardian
+// @name         heap-guardian-test-ver
 // @namespace    https://github.com/Hanzet22/PCAPDROID-JS-FEATURE
-// @version      2.0
+// @version      test
 // @description  Adaptive Heap Watchdog + Log Cleaner
 // @run-at       document-start
 // @grant        none
