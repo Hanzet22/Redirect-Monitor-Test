@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         full-blocker-test2
 // @namespace    https://github.com/Hanzet22/PCAPDROID-JS-FEATURE
-// @version      4.0
+// @version      4.1 Patch Fix Leak
 // @description  Full Blocker — Anomaly Detection + Loop Breaker + Structured Logging
 // @author       Farhan (海鹏 鸟神 / Hanzet22)
 // @match        *://*/*
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 /*
- * Full Blocker v4.0 — Hardened Banner & Permission Blocker
+ * Full Blocker v4.1 — Hardened Banner & Permission Blocker Patch Code (Fix Leak Heap)
  * ──────────────────────────────────────────────────────────
  * Anomaly Detection : scan spike counter + DOM thrash detect
  * Loop Breaker      : max dismiss attempts per element per session
@@ -25,22 +25,27 @@
     const VERSION = '4.0';
 
     // ─── STRUCTURED LOGGER ──────────────────────────────────
+    var MAX_LOG = 500;
     var _log = [];
+function log(type, msg, meta) {
+    var entry = {
+        t      : new Date().toISOString(),
+        type   : type,
+        msg    : msg,
+        target : (meta && meta.target) || null,
+        count  : (meta && meta.count)  || null,
+        status : (meta && meta.status) || 'ok'
+    };
 
-    function log(type, msg, meta) {
-        var entry = {
-            t      : new Date().toISOString(),
-            type   : type,
-            msg    : msg,
-            target : (meta && meta.target) || null,
-            count  : (meta && meta.count)  || null,
-            status : (meta && meta.status) || 'ok'
-        };
-        _log.push(entry);
-        console.warn(TAG + ' [' + type + '] ' + msg +
-            (meta ? ' | ' + JSON.stringify(meta) : ''));
-        return entry;
-    }
+    _log.push(entry);
+    if (_log.length > MAX_LOG) _log.shift(); // 🔥 Bounded
+
+    console.warn(TAG + ' [' + type + '] ' + msg +
+        (meta ? ' | ' + JSON.stringify(meta) : ''));
+    return entry;
+}
+    
+
 
     // ─── LOOP BREAKER ───────────────────────────────────────
     // Tiap elemen punya max attempt counter
@@ -69,7 +74,8 @@
     var _scanCount   = 0;
     var _dismissCount = 0;
     var _domThrash   = 0;
-    var _anomalyLog  = [];
+    var MAX_ANOMALY = 100;
+    var _anomalyLog = [];
     var SCAN_SPIKE   = 100; // 100 scan dalam 5 detik = anomaly
     var DISMISS_SPIKE = 50; // 50 dismiss = anomaly
 
@@ -387,32 +393,52 @@
     }
 
     window.addEventListener('load', scanBanners);
+// ─── 14. TOOLS ──────────────────────────────────────────
+window.__showBlockerLog = function() {
+    console.table(_log);
+    return _log;
+};
 
-    // ─── 14. TOOLS ──────────────────────────────────────────
-    window.__showBlockerLog = function() { console.table(_log); return _log; };
-    window.__showAnomalyLog = function() { console.table(_anomalyLog); return _anomalyLog; };
-    window.__rescan         = function() { scanBanners(); log('MANUAL','Rescan triggered',{status:'manual'}); };
-    window.__blockerStats   = function() {
-        return {
-            totalScans    : _scanCount,
-            totalDismiss  : _dismissCount,
-            domThrash     : _domThrash,
-            loopBreaks    : _attemptMap.size,
-            anomalies     : _anomalyLog.length
-        };
+window.__showAnomalyLog = function() {
+    console.table(_anomalyLog);
+    return _anomalyLog;
+};
+
+window.__rescan = function() {
+    scanBanners();
+    log('MANUAL','Rescan triggered',{status:'manual'});
+};
+
+window.__blockerStats = function() {
+    return {
+        totalScans   : _scanCount,
+        totalDismiss : _dismissCount,
+        domThrash    : _domThrash,
+        loopBreaks   : _attemptMap.size,
+        anomalies    : _anomalyLog.length
     };
-    window.__clearAttempts  = function() {
+};
+window.__clearAttempts = function() {
+    _attemptMap.clear();
+    log('LOOP_BREAK','Attempt map cleared',{status:'cleared'});
+};
+
+// Auto-clean jika map kebanyakan key (anti memory bloat)
+setInterval(function(){
+    if (_attemptMap.size > 1000) {
         _attemptMap.clear();
-        log('LOOP_BREAK','Attempt map cleared',{status:'cleared'});
-    };
+        log('CLEAN','Attempt map auto-cleared',{status:'clean'});
+    }
+}, 15000);
 
-    log('INIT', 'Full Blocker v' + VERSION + ' ACTIVE',
-        { status: 'init' });
-    console.info(TAG + ' v' + VERSION +
-        ' | __showBlockerLog()' +
-        ' | __showAnomalyLog()' +
-        ' | __blockerStats()' +
-        ' | __rescan()' +
-        ' | __clearAttempts()');
+log('INIT', 'Full Blocker v' + VERSION + ' ACTIVE',
+    { status: 'init' });
+
+console.info(TAG + ' v' + VERSION +
+    ' | __showBlockerLog()' +
+    ' | __showAnomalyLog()' +
+    ' | __blockerStats()' +
+    ' | __rescan()' +
+    ' | __clearAttempts()');
 
 })();
